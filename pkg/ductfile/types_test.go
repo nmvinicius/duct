@@ -19,11 +19,11 @@ func TestConditionEvaluate(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:     "no condition always true",
-			cond:     nil,
-			branch:   "main",
-			want:     true,
-			wantErr:  false,
+			name:    "no condition always true",
+			cond:    nil,
+			branch:  "main",
+			want:    true,
+			wantErr: false,
 		},
 		{
 			name: "branch exact match",
@@ -137,62 +137,62 @@ func TestTopologicalSort(t *testing.T) {
 		{
 			name: "linear dependency",
 			steps: []ductfile.Step{
-				{ Name: "build", Needs: []string{"lint"} },
-				{ Name: "lint", Needs: []string{} },
-				{ Name: "deploy", Needs: []string{"build"} },
+				{Name: "build", Needs: []string{"lint"}},
+				{Name: "lint", Needs: []string{}},
+				{Name: "deploy", Needs: []string{"build"}},
 			},
 			want: []string{"lint", "build", "deploy"},
 		},
 		{
 			name: "multiple independent",
 			steps: []ductfile.Step{
-				{ Name: "test", Needs: []string{} },
-				{ Name: "lint", Needs: []string{} },
-				{ Name: "build", Needs: []string{"test", "lint"} },
+				{Name: "test", Needs: []string{}},
+				{Name: "lint", Needs: []string{}},
+				{Name: "build", Needs: []string{"test", "lint"}},
 			},
 			want: []string{"test", "lint", "build"},
 		},
 		{
 			name: "complex graph",
 			steps: []ductfile.Step{
-				{ Name: "a", Needs: []string{} },
-				{ Name: "b", Needs: []string{"a"} },
-				{ Name: "c", Needs: []string{"a"} },
-				{ Name: "d", Needs: []string{"b", "c"} },
+				{Name: "a", Needs: []string{}},
+				{Name: "b", Needs: []string{"a"}},
+				{Name: "c", Needs: []string{"a"}},
+				{Name: "d", Needs: []string{"b", "c"}},
 			},
 			want: []string{"a", "b", "c", "d"},
 		},
 		{
 			name: "missing dependency",
 			steps: []ductfile.Step{
-				{ Name: "build", Needs: []string{"lint"} },
+				{Name: "build", Needs: []string{"lint"}},
 			},
 			wantErr: true,
 		},
 		{
 			name: "circular dependency",
 			steps: []ductfile.Step{
-				{ Name: "a", Needs: []string{"b"} },
-				{ Name: "b", Needs: []string{"a"} },
+				{Name: "a", Needs: []string{"b"}},
+				{Name: "b", Needs: []string{"a"}},
 			},
 			wantErr: true,
 		},
 		{
 			name: "self dependency",
 			steps: []ductfile.Step{
-				{ Name: "a", Needs: []string{"a"} },
+				{Name: "a", Needs: []string{"a"}},
 			},
 			wantErr: true,
 		},
 		{
-			name: "empty steps",
+			name:  "empty steps",
 			steps: []ductfile.Step{},
-			want: []string{},
+			want:  []string{},
 		},
 		{
 			name: "single step no deps",
 			steps: []ductfile.Step{
-				{ Name: "build", Needs: []string{} },
+				{Name: "build", Needs: []string{}},
 			},
 			want: []string{"build"},
 		},
