@@ -1,38 +1,53 @@
 VERSION 1.0
 
 PROJECT duct-release
+TEAM core
 
 # ============================================
 # RELEASE PIPELINE
+# Uses conventional commits to auto-version
 # ============================================
 
 STEP validate-commits
     USE bash
-    RUN git log $(git describe --tags --abbrev=0)..HEAD --oneline
-    RUN echo "Validating conventional commits..."
-    RUN ./scripts/tools/commit-lint.sh "$(git log -1 --pretty=%B)"
+    RUN echo "=== Validating commit history ==="
+    RUN LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    RUN if [ -z "$LAST_TAG" ]; then echo "No previous tag found"; else echo "Last tag: $LAST_TAG"; fi
+    RUN git log "$LAST_TAG"..HEAD --oneline
 
 STEP calculate-version
     USE bash
     NEEDS validate-commits
+    RUN echo "=== Calculating next version ==="
     RUN ./scripts/tools/version-bump.sh
-    # Gera .duct-version com próxima versão
+    RUN echo "Next version: $(cat .duct-version)"
+    RUN echo "Bump type: $(cat .duct-bump-type)"
 
 STEP generate-changelog
     USE bash
     NEEDS calculate-version
+    RUN echo "=== Generating CHANGELOG ==="
     RUN ./scripts/tools/changelog-gen.sh
-    # Gera CHANGELOG.md
+    RUN head -50 CHANGELOG.md
 
-STEP create-tag
+STEP confirm-release
     USE bash
     NEEDS generate-changelog
-    WHEN branch == "main"
-    RUN git add CHANGELOG.md
-    RUN git commit -m "chore(release): bump version [skip ci]"
-    RUN git tag -a $(cat .duct-version) -m "Release $(cat .duct-version)"
-    RUN git push origin main --tags
+    RUN echo "=== Ready to release ==="
+    RUN echo "Version: $(cat .duct-version)"
+    RUN echo ""
+    RUN echo "Run the following to publish:"
+    RUN echo "  git add CHANGELOG.md"
+    RUN echo "  git commit -m \"chore(release): $(cat .duct-version)\""
+    RUN echo "  git tag -a $(cat .duct-version) -m \"Release $(cat .duct-version)\""
+    RUN echo "  git push origin main --tags"
 
-STEP notify
-    NEEDS create-tag
-    NOTIFY slack "#releases" "Duct $(cat .duct-version) released!"
+# Descomente quando quiser automatizar totalmente:
+# STEP publish
+#     USE bash
+#     NEEDS confirm-release
+#     WHEN branch == "main"
+#     RUN git add CHANGELOG.md .duct-version
+#     RUN git commit -m "chore(release): $(cat .duct-version) [skip ci]"
+#     RUN git tag -a $(cat .duct-version) -m "Release $(cat .duct-version)"
+#     RUN git push origin main --tags

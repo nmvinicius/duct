@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/nmvinicius/duct/internal/config"
@@ -94,4 +95,20 @@ func TestExecutorRunStepNotFound(t *testing.T) {
 	err := exec.RunStep("nonexistent")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
+}
+
+func TestResolveShellUsesBashWhenDeclared(t *testing.T) {
+	exec := &Executor{}
+
+	shell := exec.resolveShell(ductfile.Step{Uses: []string{"bash"}})
+	assert.NotEmpty(t, shell)
+	assert.True(t, strings.Contains(shell, "bash") || shell == "/bin/sh")
+}
+
+func TestResolveShellFallbacksFromFish(t *testing.T) {
+	exec := &Executor{}
+	t.Setenv("SHELL", "/usr/bin/fish")
+
+	shell := exec.resolveShell(ductfile.Step{})
+	assert.Equal(t, "/bin/sh", shell)
 }

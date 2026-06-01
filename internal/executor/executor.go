@@ -80,7 +80,7 @@ func (e *Executor) RunAll() error {
 				// Try rollback
 				if step.Rollback != "" {
 					color.Yellow("Rolling back step %s...", step.Name)
-					e.runCommand(step.Rollback, step.Name+"-rollback")
+					e.runCommand(step.Rollback, step.Name+"-rollback", e.resolveShell(step))
 				}
 				return fmt.Errorf("step %q failed: %w", step.Name, err)
 			}
@@ -128,13 +128,15 @@ func (e *Executor) runStep(step ductfile.Step) error {
 		}
 	}
 
+	shell := e.resolveShell(step)
+
 	// Run commands
 	for _, cmd := range step.Runs {
 		// Expand variables
 		cmd = e.expandVars(cmd)
 
 		color.White("  $ %s", cmd)
-		if err := e.runCommand(cmd, step.Name); err != nil {
+		if err := e.runCommand(cmd, step.Name, shell); err != nil {
 			return err
 		}
 	}
@@ -143,12 +145,7 @@ func (e *Executor) runStep(step ductfile.Step) error {
 	return nil
 }
 
-func (e *Executor) runCommand(cmd, context string) error {
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "/bin/sh"
-	}
-
+func (e *Executor) runCommand(cmd, context, shell string) error {
 	command := exec.Command(shell, "-c", cmd)
 	command.Stdout = os.Stdout
 	command.Stderr = os.Stderr
@@ -161,6 +158,28 @@ func (e *Executor) runCommand(cmd, context string) error {
 	}
 
 	return command.Run()
+}
+
+func (e *Executor) resolveShell(step ductfile.Step) string {
+	for _, tool := range step.Uses {
+		if strings.EqualFold(tool, "bash") {
+			if bashPath, err := exec.LookPath("bash"); err == nil {
+				return bashPath
+			}
+			return "/bin/sh"
+		}
+	}
+
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		return "/bin/sh"
+	}
+
+	if strings.HasSuffix(shell, "fish") || strings.Contains(shell, "fish") {
+		return "/bin/sh"
+	}
+
+	return shell
 }
 
 func (e *Executor) setupTool(tool string) error {

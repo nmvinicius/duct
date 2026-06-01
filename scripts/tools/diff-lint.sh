@@ -12,15 +12,20 @@ if [[ -z "$COMMIT_MSG" ]]; then
     exit 1
 fi
 
-# Estatísticas do diff
-FILES_CHANGED=$(git diff --cached --name-only | wc -l)
-LINES_CHANGED=$(git diff --cached --numstat | awk '{sum+=$1+$2} END {print sum}')
-TYPE=$(echo "$COMMIT_MSG" | sed -E 's/^(feat|fix|chore|docs|refactor|test|ci).*/\1/')
+# Estatísticas do diff (staged)
+FILES_CHANGED=$(git diff --cached --name-only 2>/dev/null | wc -l)
+LINES_CHANGED=$(git diff --cached --numstat 2>/dev/null | awk '{sum+=$1+$2} END {print sum}')
+TYPE=$(echo "$COMMIT_MSG" | sed -E 's/^(feat|fix|chore|docs|refactor|test|ci|build|perf).*/\1/')
 
-duct_info "Diff stats: $FILES_CHANGED files, $LINES_CHANGED lines"
+if [[ -z "$TYPE" ]]; then
+    duct_error "Could not detect commit type"
+    exit 1
+fi
+
+duct_info "Diff stats: $FILES_CHANGED files, ${LINES_CHANGED:-0} lines"
 duct_info "Commit type: $TYPE"
 
-# Thresholds
+# Thresholds por tipo
 case "$TYPE" in
     fix)
         MAX_FILES=5
@@ -30,7 +35,7 @@ case "$TYPE" in
         MAX_FILES=15
         MAX_LINES=500
         ;;
-    docs|test|ci|chore)
+    docs|test|ci|chore|build|perf)
         MAX_FILES=999
         MAX_LINES=999
         ;;
@@ -47,7 +52,7 @@ if (( FILES_CHANGED > MAX_FILES )); then
     ((WARNINGS++))
 fi
 
-if (( LINES_CHANGED > MAX_LINES )); then
+if [[ -n "$LINES_CHANGED" && "$LINES_CHANGED" -gt "$MAX_LINES" ]]; then
     duct_warn "$TYPE should change ≤ $MAX_LINES lines, got $LINES_CHANGED"
     ((WARNINGS++))
 fi
@@ -55,7 +60,7 @@ fi
 # Validação de scope (se presente)
 if echo "$COMMIT_MSG" | grep -qE '^\w+\('; then
     SCOPE=$(echo "$COMMIT_MSG" | sed -E 's/^\w+\(([^)]+)\).*/\1/')
-    SCOPE_FILES=$(git diff --cached --name-only | grep -c "^$SCOPE/" || true)
+    SCOPE_FILES=$(git diff --cached --name-only 2>/dev/null | grep -c "^$SCOPE/" || true)
     
     if (( SCOPE_FILES == 0 )); then
         duct_warn "Scope '$SCOPE' not found in changed files"
@@ -65,7 +70,8 @@ fi
 
 if (( WARNINGS > 0 )); then
     duct_warn "$WARNINGS warning(s) - consider splitting this commit"
-    # Não falha, só avisa (pode ser strict com exit 1)
+    # Não falha, só avisa. Para strict mode, descomente:
+    # exit 1
 fi
 
 duct_log "Diff validation complete"
