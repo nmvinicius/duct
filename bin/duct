@@ -30,6 +30,14 @@ needs_build() {
         return 0
     fi
 
+    # Rebuild if Git metadata changed (new HEAD, checkout, merge, etc.)
+    if [ -d "$ROOT_DIR/.git" ] || [ -f "$ROOT_DIR/.git" ]; then
+        if find "$ROOT_DIR/.git" -type f -newer "$BINARY" | grep -q .; then
+            warn "Git metadata changed, rebuilding..."
+            return 0
+        fi
+    fi
+
     return 1
 }
 
