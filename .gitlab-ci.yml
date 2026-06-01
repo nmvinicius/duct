@@ -1,59 +1,9 @@
-stages:
-  - build
-  - test
-  - duct
-
-variables:
-  GOMODCACHE: "$CI_PROJECT_DIR/.go/pkg/mod"
-  DUCT_BIN: "$CI_PROJECT_DIR/duct"
-
-cache:
-  key: ${CI_COMMIT_REF_SLUG}
-  paths:
-    - .go/pkg/mod/
-    - duct
-
-before_script:
-  - apt-get update && apt-get install -y git
-  - export PATH="$DUCT_BIN:$PATH"
-
-build-duct:
-  stage: build
-  image: golang:1.26
-  script:
-    - go build -o "$DUCT_BIN" ./cmd/duct
-    - "$DUCT_BIN" version
-  artifacts:
-    paths:
-      - duct
-    expire_in: 1 hour
-
-test-go:
-  stage: test
-  image: golang:1.26
-  script:
-    - go test -v ./...
-    - go test -coverprofile=coverage.out ./...
-  artifacts:
-    paths:
-      - coverage.out
-    expire_in: 1 week
-
-validate-ductfile:
-  stage: duct
-  image: golang:1.26
-  dependencies:
-    - build-duct
-  script:
-    - "$DUCT_BIN" validate --file Ductfile.test
-
 run-duct:
-  stage: duct
-  image: golang:1.26
-  dependencies:
-    - build-duct
+  image: alpine/git:latest
+  cache:
+    key: duct
+    paths: [.duct/]
+  before_script:
+    - "[ -d .duct ] || git clone --branch stable --depth 1 https://gitlab.com/nmvinicius/duct.git .duct"
   script:
-    - "$DUCT_BIN" run --local --file Ductfile.test
-  only:
-    - main
-    - stable
+    - sh .duct/bin/duct run

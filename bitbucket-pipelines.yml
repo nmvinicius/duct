@@ -1,50 +1,14 @@
 definitions:
   caches:
-    duct: /tmp/duct
-    gomod: $GOPATH/pkg/mod
+    duct: .duct
 
 pipelines:
   default:
     - step:
-        name: Build & Test
-        image: golang:1.26
+        name: Duct
+        image: atlassian/default-image:latest
         caches:
-          - gomod
+          - duct
         script:
-          - go test -v ./...
-          - go test -coverprofile=coverage.out ./...
-
-  branches:
-    main:
-      - step:
-          name: Build Duct
-          image: golang:1.26
-          caches:
-            - gomod
-          script:
-            - go build -o /tmp/duct ./cmd/duct
-            - /tmp/duct version
-      - step:
-          name: Validate & Run
-          image: golang:1.26
-          caches:
-            - duct
-            - gomod
-          script:
-            - /tmp/duct validate --file Ductfile.test
-            - /tmp/duct run --local --file Ductfile.test
-          artifacts:
-            - coverage.out
-            - coverage.html
-
-  pull-requests:
-    '**':
-      - step:
-          name: PR Validation
-          image: golang:1.26
-          caches:
-            - gomod
-          script:
-            - go test -v ./...
-            - go build -o /tmp/duct ./cmd/duct
-            - /tmp/duct validate --file Ductfile.test
+          - "[ -d .duct ] || git clone --branch stable --depth 1 https://bitbucket.org/nmvinicius/duct.git .duct"
+          - "sh .duct/bin/duct run"

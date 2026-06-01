@@ -1,0 +1,60 @@
+VERSION 1.0
+
+PROJECT duct
+TEAM core
+
+# ============================================
+# DUCT CI PIPELINE
+# Self-hosted: duct running duct
+# ============================================
+
+STEP setup
+    USE bash
+    RUN echo "Duct CI starting..."
+    RUN echo "Platform: $DUCT_PLATFORM"
+    RUN echo "Commit: $GIT_COMMIT"
+
+STEP lint
+    USE bash
+    NEEDS setup
+    RUN echo "Running go fmt..."
+    RUN test -z "$(gofmt -l .)" || (echo "gofmt failed" && exit 1)
+    RUN echo "Running go vet..."
+    RUN go vet ./...
+
+STEP test
+    USE bash
+    NEEDS lint
+    RUN echo "Running tests..."
+    RUN go test -v ./...
+    RUN go test -coverprofile=coverage.out ./...
+    ARTIFACTS coverage.out
+
+STEP build
+    USE bash
+    NEEDS test
+    RUN echo "Building duct..."
+    RUN go build -o build/duct ./cmd/duct
+    RUN ./build/duct version
+    ARTIFACTS build/duct
+
+STEP validate-examples
+    USE bash
+    NEEDS build
+    RUN echo "Validating example Ductfiles..."
+    RUN ./build/duct validate --file Ductfile.example
+    RUN ./build/duct validate --file Ductfile.test
+    RUN ./build/duct validate --file Ductfile.release
+
+STEP test-local-pipeline
+    USE bash
+    NEEDS validate-examples
+    RUN echo "Running local pipeline test..."
+    RUN ./build/duct run --local --file Ductfile.test
+
+STEP release-check
+    USE bash
+    NEEDS test-local-pipeline
+    WHEN branch == "main"
+    RUN echo "Release check passed"
+    RUN echo "Version: $(cat .duct-version 2>/dev/null || echo 'not set')"
