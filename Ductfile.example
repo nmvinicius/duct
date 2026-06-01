@@ -1,0 +1,58 @@
+# ============================================
+# Ductfile Example - Node.js API
+# ============================================
+
+VERSION 1.0
+
+PROJECT example-api
+TEAM platform
+
+# Global variables
+GLOBAL NODE_VERSION=20
+GLOBAL REGISTRY=123456789.dkr.ecr.us-east-1.amazonaws.com
+GLOBAL AWS_REGION=us-east-1
+
+# Required secrets (documented, not enforced yet)
+REQUIRE SECRET AWS_ACCESS_KEY_ID
+REQUIRE SECRET AWS_SECRET_ACCESS_KEY
+
+# Caches
+CACHE node_modules
+CACHE docker_layers
+
+# ============================================
+# STEPS
+# ============================================
+
+STEP lint
+    USE node
+    RUN npm ci
+    RUN npm run lint
+    CACHE node_modules
+
+STEP test
+    USE node
+    NEEDS lint
+    RUN npm run test:unit
+    ARTIFACTS coverage/
+
+STEP build
+    USE docker
+    NEEDS test
+    RUN echo "Building image for $PROJECT:$GIT_COMMIT"
+    CACHE docker_layers
+
+STEP deploy-staging
+    USE kubectl
+    NEEDS build
+    WHEN branch == "develop"
+    RUN echo "Deploying to staging..."
+    ROLLBACK echo "Rolling back staging..."
+
+STEP deploy-prod
+    USE kubectl
+    NEEDS deploy-staging
+    WHEN branch == "main"
+    RUN echo "Deploying to production..."
+    NOTIFY slack "#deploys" "Deployed $PROJECT:$GIT_COMMIT to production"
+    ROLLBACK echo "Rolling back production..."

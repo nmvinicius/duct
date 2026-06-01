@@ -1,0 +1,38 @@
+VERSION 1.0
+
+PROJECT duct-release
+
+# ============================================
+# RELEASE PIPELINE
+# ============================================
+
+STEP validate-commits
+    USE bash
+    RUN git log $(git describe --tags --abbrev=0)..HEAD --oneline
+    RUN echo "Validating conventional commits..."
+    RUN ./scripts/tools/commit-lint.sh "$(git log -1 --pretty=%B)"
+
+STEP calculate-version
+    USE bash
+    NEEDS validate-commits
+    RUN ./scripts/tools/version-bump.sh
+    # Gera .duct-version com próxima versão
+
+STEP generate-changelog
+    USE bash
+    NEEDS calculate-version
+    RUN ./scripts/tools/changelog-gen.sh
+    # Gera CHANGELOG.md
+
+STEP create-tag
+    USE bash
+    NEEDS generate-changelog
+    WHEN branch == "main"
+    RUN git add CHANGELOG.md
+    RUN git commit -m "chore(release): bump version [skip ci]"
+    RUN git tag -a $(cat .duct-version) -m "Release $(cat .duct-version)"
+    RUN git push origin main --tags
+
+STEP notify
+    NEEDS create-tag
+    NOTIFY slack "#releases" "Duct $(cat .duct-version) released!"

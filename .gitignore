@@ -1,0 +1,31 @@
+# Build output
+/build/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# Go tooling
+*.out
+*.coverprofile
+coverage.html
+coverage.out
+
+# Dependency directories
+vendor/
+
+# Editor and OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Shell history and temporary files
+*.tmp
+*.bak
+
+# Misc
+*.log
