@@ -42,12 +42,11 @@ STEP confirm-release
     RUN echo "  git tag -a $(cat .duct-version) -m \"Release $(cat .duct-version)\""
     RUN echo "  git push origin main --tags"
 
-# Descomente quando quiser automatizar totalmente:
-# STEP publish
-#     USE bash
-#     NEEDS confirm-release
-#     WHEN branch == "main"
-#     RUN git add CHANGELOG.md .duct-version
-#     RUN git commit -m "chore(release): $(cat .duct-version) [skip ci]"
-#     RUN git tag -a $(cat .duct-version) -m "Release $(cat .duct-version)"
-#     RUN git push origin main --tags
+STEP publish
+    USE bash
+    NEEDS confirm-release
+    WHEN branch == "main"
+    RUN git add CHANGELOG.md .duct-version
+    RUN git commit -m "chore(release): $(cat .duct-version) [skip ci]"
+    RUN git tag -a $(cat .duct-version) -m "Release $(cat .duct-version)"
+    RUN git push origin main --tags
