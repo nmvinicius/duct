@@ -6,5 +6,5 @@ run-duct:
   before_script:
     - apk add --no-cache git
   script:
-    - "[ -d .duct ] || git clone --branch stable --depth 1 https://gitlab.com/nmvinicius/duct.git .duct"
+    - "[ -d .duct ] || git clone --branch main --depth 1 https://gitlab.com/nmvinicius/duct.git .duct"
     - "sh .duct/bin/duct run"

@@ -10,5 +10,5 @@ pipelines:
         caches:
           - duct
         script:
-          - "[ -d .duct ] || git clone --branch stable --depth 1 https://bitbucket.org/nmvinicius/duct.git .duct"
+          - "[ -d .duct ] || git clone --branch main --depth 1 https://bitbucket.org/nmvinicius/duct.git .duct"
           - "sh .duct/bin/duct run"

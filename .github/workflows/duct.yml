@@ -10,7 +10,7 @@ jobs:
   duct:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -21,5 +21,5 @@ jobs:
 
       - name: Run Duct
         run: |
-          git clone --branch stable --depth 1 https://github.com/nmvinicius/duct.git .duct
+          git clone --branch main --depth 1 https://github.com/nmvinicius/duct.git .duct
           sh .duct/bin/duct run
