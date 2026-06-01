@@ -6,7 +6,7 @@ pipelines:
   default:
     - step:
         name: Duct
-        image: atlassian/default-image:latest
+        image: golang:1.26
         caches:
           - duct
         script:

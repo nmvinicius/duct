@@ -29,3 +29,9 @@ Thumbs.db
 
 # Misc
 *.log
+
+# Ignora todo o conteúdo da pasta bin
+bin/*
+
+# Abre uma exceção para o arquivo ou subpasta duct
+!bin/duct

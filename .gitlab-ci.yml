@@ -1,9 +1,10 @@
 run-duct:
-  image: alpine/git:latest
+  image: golang:1.26-alpine
   cache:
     key: duct
     paths: [.duct/]
   before_script:
-    - "[ -d .duct ] || git clone --branch stable --depth 1 https://gitlab.com/nmvinicius/duct.git .duct"
+    - apk add --no-cache git
   script:
-    - sh .duct/bin/duct run
+    - "[ -d .duct ] || git clone --branch stable --depth 1 https://gitlab.com/nmvinicius/duct.git .duct"
+    - "sh .duct/bin/duct run"

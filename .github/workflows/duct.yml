@@ -14,8 +14,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
       - name: Run Duct
         run: |
-          # Clona duct stable ou usa cache
-          [ -d .duct ] || git clone --branch stable --depth 1 https://github.com/nmvinicius/duct.git .duct
+          git clone --branch stable --depth 1 https://github.com/nmvinicius/duct.git .duct
           sh .duct/bin/duct run
