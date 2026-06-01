@@ -7,4 +7,5 @@ run-duct:
     - apk add --no-cache git
   script:
     - "[ -d .duct ] || git clone --branch main --depth 1 https://gitlab.com/nmvinicius/duct.git .duct"
-    - "sh .duct/bin/duct run"
+    - "chmod +x .duct/bin/duct"
+    - ".duct/bin/duct run"

@@ -11,4 +11,5 @@ pipelines:
           - duct
         script:
           - "[ -d .duct ] || git clone --branch main --depth 1 https://bitbucket.org/nmvinicius/duct.git .duct"
+          - "chmod +x .duct/bin/duct"
           - "sh .duct/bin/duct run"

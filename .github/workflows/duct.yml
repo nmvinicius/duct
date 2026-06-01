@@ -22,4 +22,5 @@ jobs:
       - name: Run Duct
         run: |
           git clone --branch main --depth 1 https://github.com/nmvinicius/duct.git .duct
-          sh .duct/bin/duct run
+          chmod +x .duct/bin/duct
+          .duct/bin/duct run
